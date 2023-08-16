@@ -12,6 +12,8 @@ public class CameraController : MonoBehaviour
     private Vector3 velocity = Vector3.zero;
     bool isFinish = false;
 
+    public Transform finishCamRotator;
+
     private void Awake()
     {
 
@@ -42,16 +44,19 @@ public class CameraController : MonoBehaviour
     public IEnumerator FinishCam()
     {
         isFinish = true;
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(.5f);
+        this.transform.parent = finishCamRotator;
 
-        LevelCreator.instance.LevelFinish();
-        isFinish = false;
-        /*  transform.DORotate(new Vector3(0f, 360f, 0f), 4, RotateMode.WorldAxisAdd)
-              .SetLoops(-1, LoopType.Incremental) // Sonsuz döngü için
-              .SetEase(Ease.Linear)               // Dönme hızını düzgün hale getirme
-              .OnUpdate(() => {
-                 // transform.LookAt(targetPosition); // Her güncellemede hedefe bak
-              });
-      */
+
+        finishCamRotator.DORotate(new Vector3(0f, 360f, 0f), 4, RotateMode.WorldAxisAdd)
+        .SetEase(Ease.Linear).OnComplete(() =>
+        {
+            LevelCreator.instance.LevelFinish();
+            isFinish = false;
+            this.transform.parent = null;
+
+        });
+
+
     }
 }

@@ -70,7 +70,7 @@ public class PlayerController : MonoBehaviour
 
         rb.velocity = Vector3.forward * speed;
         Vector3 _rbPos = rb.transform.position;
-        _rbPos = Vector3.Lerp(_rbPos, new Vector3(LevelCreator.instance.lastCube.transform.position.x, _rbPos.y, _rbPos.z), .7f * Time.deltaTime);
+        _rbPos = Vector3.Lerp(_rbPos, new Vector3(LevelCreator.instance.lastCube.transform.position.x, _rbPos.y, _rbPos.z), 1f * Time.deltaTime);
         rb.transform.position = _rbPos;
         animator.SetFloat(ANIM_Speed, speed);
 
@@ -108,14 +108,26 @@ public class PlayerController : MonoBehaviour
     public void PlayerReset(float _posZ)
     {
         playerState = PlayerState.Idle;
-        transform.position = new Vector3(0, 0, _posZ - 1.10f);
         animator.SetBool("Dance", false);
+        animator.SetBool("Running", true);
+        transform.DOMove(new Vector3(0, 0, _posZ - 1.10f), 1f).SetEase(Ease.Flash).OnComplete(() =>
+        {
+            animator.SetBool("Running", false);
+        });
+
 
     }
     IEnumerator Lose()
     {
         yield return new WaitForSeconds(2f);
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.layer == 6)
+        {
+            StartCoroutine(other.GetComponent<CollectableObj>().ParticleActiveted());
+        }
     }
 
     bool SphereRaycast()
@@ -129,9 +141,9 @@ public class PlayerController : MonoBehaviour
                 dieWait = 0.15f;
                 return true;
             }
-            else if (hitCollider.gameObject.layer == 8&&hitCollider.transform.position.z>transform.position.z)//Finish
+            else if (hitCollider.gameObject.layer == 8 && hitCollider.transform.position.z > transform.position.z)//Finish
             {
-                
+
                 PlayerDance();
                 return false;
             }

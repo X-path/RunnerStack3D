@@ -9,21 +9,23 @@ public class LevelCreator : MonoBehaviour
     [SerializeField] GameObject cubePrefab;
     [SerializeField] GameObject finishCube;
     [SerializeField] GameObject starPrefab;
-    [SerializeField] int nextRow = 0;
-    [SerializeField] int allLevelCubeCount = 0;
+    int nextRow = 0;
+    [SerializeField] int levelListCount = 0;
+    [SerializeField] List<int> levelList = new List<int>();
     float firstCubePositionZ = 0;
     float cubeZScale = 2.5f;
     float nextCubePositionZ = 0;
     [SerializeField] List<GameObject> cubeList = new List<GameObject>();
     [SerializeField] List<Material> cubeColors = new List<Material>();
     [SerializeField] float _xPosition;
-    [SerializeField] GameObject currentCube = null;
+    GameObject currentCube = null;
     public GameObject lastCube = null;
     [SerializeField] GameObject standCube;
     List<GameObject> cubesPool = new List<GameObject>();
     [SerializeField] int cubesPoolCount = 0;
     float lastFinishPosZ = 0;
     List<GameObject> cutCubes = new List<GameObject>();
+    List<GameObject> finishList = new List<GameObject>();
     private void Awake()
     {
 
@@ -50,14 +52,26 @@ public class LevelCreator : MonoBehaviour
 
     void FinishCreator()
     {
-        float _finihCubeZPosition = firstCubePositionZ + cubeZScale + (allLevelCubeCount * cubeZScale);
-        GameObject _go = Instantiate(finishCube, new Vector3(0, 0.01f, (_finihCubeZPosition - finishCube.transform.localScale.z)), cubePrefab.transform.rotation);
+        FinishDestroy();
+
+        float _finishCubeZPosition = firstCubePositionZ + cubeZScale + (levelList[levelListCount] * cubeZScale);
+        GameObject _go = Instantiate(finishCube, new Vector3(0, 0.01f, (_finishCubeZPosition - finishCube.transform.localScale.z)), cubePrefab.transform.rotation);
         lastFinishPosZ = _go.transform.position.z;
+        finishList.Add(_go);
+    }
+    void FinishDestroy()
+    {
+        if (finishList.Count > 1)
+        {
+            GameObject _finish = finishList[0];
+            finishList.RemoveAt(0);
+            Destroy(_finish);
+        }
     }
     void CubeCreator()
     {
 
-        for (int i = 0; i < allLevelCubeCount; i++)
+        for (int i = 0; i < levelList[levelListCount]; i++)
         {
             if (i + 1 % 2 == 1)
             {
@@ -71,11 +85,28 @@ public class LevelCreator : MonoBehaviour
             GameObject _go = cubesPool[i]; //Instantiate(cubePrefab, new Vector3(_xPosition, -0.5f, (nextCubePositionZ + cubeZScale)), cubePrefab.transform.rotation);
             _go.transform.position = new Vector3(_xPosition, -0.5f, (nextCubePositionZ + cubeZScale));
             _go.GetComponent<MeshRenderer>().material = ColorCreator();
+
+            GameObject _star = StarCreator();
+            if (_star != null)
+                _star.transform.position = new Vector3(0, 0, _go.transform.position.z);
+
             nextCubePositionZ += cubeZScale;
             cubeList.Add(_go);
 
         }
 
+
+
+    }
+    GameObject StarCreator()
+    {
+        int _rndm = Random.Range(0, 2);
+        if (_rndm == 1)
+        {
+            GameObject _go = Instantiate(starPrefab);
+            return _go;
+        }
+        return null;
     }
     Material ColorCreator()
     {
@@ -210,6 +241,15 @@ public class LevelCreator : MonoBehaviour
     {
         Debug.Log("LevelFinish");
 
+        if (levelListCount < levelList.Count-1)
+        {
+            levelListCount++;
+        }
+        else
+        {
+            levelListCount = 0;
+        }
+
         CubePoolResetAll();
         standCube.transform.position = new Vector3(standCube.transform.position.x, standCube.transform.position.y, lastFinishPosZ + 2.15f);
         firstCubePositionZ = standCube.transform.position.z;
@@ -219,6 +259,7 @@ public class LevelCreator : MonoBehaviour
         FinishCreator();
         PlayerController.instance.PlayerReset(standCube.transform.position.z);
         UIManager.instance.PlayButtonActiveted();
+
 
     }
 
