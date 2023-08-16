@@ -26,6 +26,9 @@ public class LevelCreator : MonoBehaviour
     float lastFinishPosZ = 0;
     List<GameObject> cutCubes = new List<GameObject>();
     List<GameObject> finishList = new List<GameObject>();
+
+    AudioSource audioSource;
+    bool isPerfectTime = false;
     private void Awake()
     {
 
@@ -41,6 +44,8 @@ public class LevelCreator : MonoBehaviour
     }
     private void Start()
     {
+        audioSource = GetComponent<AudioSource>();
+
         firstCubePositionZ = standCube.transform.position.z;
         nextCubePositionZ = firstCubePositionZ;
         lastCube = standCube;
@@ -170,6 +175,7 @@ public class LevelCreator : MonoBehaviour
         }
     }
 
+    #region Cut //This cube cutting part is taken from the github account in the link and edited.  https://github.com/neziruran/GameGuruCaseStudy/blob/main/Assets/_Project/Task_2/Scripts/Runtime/Gameplay/Level/LevelWizard.cs
     void CutCube()
     {
 
@@ -184,6 +190,7 @@ public class LevelCreator : MonoBehaviour
         cutBlock.transform.position = new Vector3((targetPos.x + blockPos.x) / 2f, blockPos.y, blockPos.z);
         cutBlock.transform.localScale = new Vector3(currentCube.transform.localScale.x - Mathf.Abs(lastCube.transform.position.x - currentCube.transform.position.x), currentCube.transform.localScale.y, currentCube.transform.localScale.z);
 
+        Sound(cutBlock);
 
         var factor = SetFactor(blockPos, targetPos);
         SetCurrentBlock(targetPos, blockPos, originalScale, factor, cutBlock);
@@ -237,11 +244,28 @@ public class LevelCreator : MonoBehaviour
         return factor;
     }
 
+    public void Sound(GameObject _cutBlock)
+    {
+        isPerfectTime = _cutBlock.transform.localScale.x / currentCube.transform.localScale.x > .9f;
+        if (isPerfectTime)
+        {
+            audioSource.pitch += audioSource.pitch * .1f;
+        }
+        else
+        {
+            audioSource.pitch = 0.5f;
+
+        }
+
+        audioSource.Stop();
+        audioSource.Play();
+    }
+    #endregion
     public void LevelFinish()
     {
         Debug.Log("LevelFinish");
 
-        if (levelListCount < levelList.Count-1)
+        if (levelListCount < levelList.Count - 1)
         {
             levelListCount++;
         }
@@ -259,7 +283,7 @@ public class LevelCreator : MonoBehaviour
         FinishCreator();
         PlayerController.instance.PlayerReset(standCube.transform.position.z);
         UIManager.instance.PlayButtonActiveted();
-
+        audioSource.pitch = 0.5f;
 
     }
 
